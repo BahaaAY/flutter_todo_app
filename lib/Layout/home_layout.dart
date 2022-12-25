@@ -7,14 +7,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:intl/intl.dart';
 import 'dart:developer';
 
-class HomeLayout extends StatefulWidget {
-  const HomeLayout({Key? key}) : super(key: key);
-
-  @override
-  _HomeLayoutState createState() => _HomeLayoutState();
-}
-
-class _HomeLayoutState extends State<HomeLayout> {
+class HomeLayout extends StatelessWidget {
   var titleController = TextEditingController();
   var timeController = TextEditingController();
   var dateController = TextEditingController();
@@ -30,11 +23,7 @@ class _HomeLayoutState extends State<HomeLayout> {
     DoneTasksScreen(),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    getDatabase();
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -45,16 +34,15 @@ class _HomeLayoutState extends State<HomeLayout> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          setState(() {
             if (isBottomSheetShown) {
               if(formKey.currentState!.validate())
-                {
+              {
 
-                  Navigator.pop(context);
-                  isBottomSheetShown = !isBottomSheetShown;
-                  debugPrint("DateTime: ${dateTime.toString()}");
-                  insertToDatabase();
-                }
+                Navigator.pop(context);
+                isBottomSheetShown = !isBottomSheetShown;
+                debugPrint("DateTime: ${dateTime.toString()}");
+                insertToDatabase();
+              }
             } else {
               isBottomSheetShown = !isBottomSheetShown;
               scaffoldKey.currentState?.showBottomSheet((context) {
@@ -74,9 +62,9 @@ class _HomeLayoutState extends State<HomeLayout> {
                             label: "Task Title",
                             validate: (value) {
                               if(value.toString().isEmpty)
-                                {
-                                  return "Title shouldn't be empty";
-                                }
+                              {
+                                return "Title shouldn't be empty";
+                              }
                               return null;
                             }),
                         SizedBox(
@@ -89,18 +77,17 @@ class _HomeLayoutState extends State<HomeLayout> {
                           label: "Time",
                           validate: (value) {
                             if(value.toString().isEmpty)
-                              {
-                                return "You should select task time";
-                              }
+                            {
+                              return "You should select task time";
+                            }
                             return null;
                           },
                           onTap: () {
-                            setState(() {
                               FocusScope.of(context)
                                   .requestFocus(new FocusNode());
                               showTimePicker(
-                                      context: context,
-                                      initialTime: TimeOfDay.now())
+                                  context: context,
+                                  initialTime: TimeOfDay.now())
                                   .then((time) {
                                 if (time != null) {
                                   timeController.text = time.format(context);
@@ -111,7 +98,6 @@ class _HomeLayoutState extends State<HomeLayout> {
                                   }
                                 }
                               });
-                            });
                           },
                           prefix: Icon(Icons.watch_later_outlined),
                         ),
@@ -131,7 +117,6 @@ class _HomeLayoutState extends State<HomeLayout> {
                             return null;
                           },
                           onTap: () {
-                            setState(() {
                               FocusScope.of(context)
                                   .requestFocus(new FocusNode());
                               showDatePicker(
@@ -149,7 +134,6 @@ class _HomeLayoutState extends State<HomeLayout> {
                                     dateController.clear();
                                   }
                                 }
-                              });
                             });
                           },
                           prefix: Icon(Icons.calendar_today_outlined),
@@ -160,16 +144,13 @@ class _HomeLayoutState extends State<HomeLayout> {
                 );
               });
             }
-          });
         },
         child: Icon(isBottomSheetShown ? Icons.check : Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (index) {
-          setState(() {
             currentIndex = index;
-          });
         },
         items: [
           BottomNavigationBarItem(
@@ -192,8 +173,8 @@ class _HomeLayoutState extends State<HomeLayout> {
 
 
   void
-      getDatabase() async //Get the Database: Create new one or open existing one
-  {
+  getDatabase() async //Get the Database: Create new one or open existing one
+      {
     database = await openDatabase(
       'todo.db',
       version: 1,
@@ -201,7 +182,7 @@ class _HomeLayoutState extends State<HomeLayout> {
         log('Database created Successfully');
         await database
             .execute(
-                "CREATE TABLE tasks ('id' INTEGER PRIMARY KEY AUTOINCREMENT, 'title' TEXT, 'datetime' TEXT, 'status' TEXT );")
+            "CREATE TABLE tasks ('id' INTEGER PRIMARY KEY AUTOINCREMENT, 'title' TEXT, 'datetime' TEXT, 'status' TEXT );")
             .then((value) {
           log("Table Created Successfully");
         }).catchError((error) {
@@ -233,3 +214,4 @@ class _HomeLayoutState extends State<HomeLayout> {
     return new DateTime(newDate.year, newDate.month, newDate.day, date.hour, date.minute);
   }
 }
+
