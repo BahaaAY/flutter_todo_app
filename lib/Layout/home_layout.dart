@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_todo_app/Modules/archived_tasks/archived_tasks_screen.dart';
-import 'package:flutter_todo_app/Modules/done_tasks/done_tasks_screen.dart';
-import 'package:flutter_todo_app/Modules/new_tasks/new_tasks_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_todo_app/Shared/components.dart';
+import 'package:flutter_todo_app/Shared/cubit/cubit.dart';
+import 'package:flutter_todo_app/Shared/cubit/states.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:intl/intl.dart';
 import 'dart:developer';
@@ -16,75 +16,76 @@ class HomeLayout extends StatelessWidget {
   DateTime dateTime = DateTime.now();
   bool isBottomSheetShown = false;
   late Database database;
-  int currentIndex = 1;
-  List<Widget> screens = [
-    ArchivedTasksScreen(),
-    NewTasksScreen(),
-    DoneTasksScreen(),
-  ];
+
 
 
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: scaffoldKey,
-      appBar: AppBar(
-        title: Text("Todo App"),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-            if (isBottomSheetShown) {
-              if(formKey.currentState!.validate())
-              {
+    return BlocProvider(
+      create: (BuildContext context) => AppCubit(),
+      child: BlocConsumer<AppCubit,AppStates>(
+        listener: (BuildContext context, AppStates state){},
+        builder: (BuildContext context, AppStates state) {
+          AppCubit cubit = AppCubit.get(context);
+          return Scaffold(
+          key: scaffoldKey,
+          appBar: AppBar(
+            title: Text("Todo App"),
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              if (isBottomSheetShown) {
+                if(formKey.currentState!.validate())
+                {
 
-                Navigator.pop(context);
+                  Navigator.pop(context);
+                  isBottomSheetShown = !isBottomSheetShown;
+                  debugPrint("DateTime: ${dateTime.toString()}");
+                  insertToDatabase();
+                }
+              } else {
                 isBottomSheetShown = !isBottomSheetShown;
-                debugPrint("DateTime: ${dateTime.toString()}");
-                insertToDatabase();
-              }
-            } else {
-              isBottomSheetShown = !isBottomSheetShown;
-              scaffoldKey.currentState?.showBottomSheet((context) {
-                return Container(
-                  padding: const EdgeInsets.all(20.0),
-                  width: double.infinity,
-                  color: Colors.grey[200],
-                  child: Form(
-                    key: formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        defaultFormField(
-                            prefix: Icon(Icons.title),
-                            controller: titleController,
-                            inputType: TextInputType.text,
-                            label: "Task Title",
+                scaffoldKey.currentState?.showBottomSheet((context) {
+                  return Container(
+                    padding: const EdgeInsets.all(20.0),
+                    width: double.infinity,
+                    color: Colors.grey[200],
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          defaultFormField(
+                              prefix: const Icon(Icons.title),
+                              controller: titleController,
+                              inputType: TextInputType.text,
+                              label: "Task Title",
+                              validate: (value) {
+                                if(value.toString().isEmpty)
+                                {
+                                  return "Title shouldn't be empty";
+                                }
+                                return null;
+                              }),
+                          SizedBox(
+                            height: 10.0,
+                          ),
+                          defaultFormField(
+                            readOnly: true,
+                            controller: timeController,
+                            inputType: TextInputType.datetime,
+                            label: "Time",
                             validate: (value) {
                               if(value.toString().isEmpty)
                               {
-                                return "Title shouldn't be empty";
+                                return "You should select task time";
                               }
                               return null;
-                            }),
-                        SizedBox(
-                          height: 10.0,
-                        ),
-                        defaultFormField(
-                          readOnly: true,
-                          controller: timeController,
-                          inputType: TextInputType.datetime,
-                          label: "Time",
-                          validate: (value) {
-                            if(value.toString().isEmpty)
-                            {
-                              return "You should select task time";
-                            }
-                            return null;
-                          },
-                          onTap: () {
+                            },
+                            onTap: () {
                               FocusScope.of(context)
-                                  .requestFocus(new FocusNode());
+                                  .requestFocus(FocusNode());
                               showTimePicker(
                                   context: context,
                                   initialTime: TimeOfDay.now())
@@ -98,25 +99,25 @@ class HomeLayout extends StatelessWidget {
                                   }
                                 }
                               });
-                          },
-                          prefix: Icon(Icons.watch_later_outlined),
-                        ),
-                        SizedBox(
-                          height: 10.0,
-                        ),
-                        defaultFormField(
-                          readOnly: true,
-                          controller: dateController,
-                          inputType: TextInputType.datetime,
-                          label: "Date",
-                          validate: (value) {
-                            if(value.toString().isEmpty)
-                            {
-                              return "You should select task date";
-                            }
-                            return null;
-                          },
-                          onTap: () {
+                            },
+                            prefix: Icon(Icons.watch_later_outlined),
+                          ),
+                          const SizedBox(
+                            height: 10.0,
+                          ),
+                          defaultFormField(
+                            readOnly: true,
+                            controller: dateController,
+                            inputType: TextInputType.datetime,
+                            label: "Date",
+                            validate: (value) {
+                              if(value.toString().isEmpty)
+                              {
+                                return "You should select task date";
+                              }
+                              return null;
+                            },
+                            onTap: () {
                               FocusScope.of(context)
                                   .requestFocus(new FocusNode());
                               showDatePicker(
@@ -134,40 +135,43 @@ class HomeLayout extends StatelessWidget {
                                     dateController.clear();
                                   }
                                 }
-                            });
-                          },
-                          prefix: Icon(Icons.calendar_today_outlined),
-                        ),
-                      ],
+                              });
+                            },
+                            prefix: Icon(Icons.calendar_today_outlined),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              });
-            }
+                  );
+                });
+              }
+            },
+            child: Icon(isBottomSheetShown ? Icons.check : Icons.add),
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: cubit.currentIndex,
+            onTap: (index) {
+              cubit.changeNavBarState(index);
+            },
+            items: [
+              BottomNavigationBarItem(
+                label: "Archive",
+                icon: Icon(Icons.archive),
+              ),
+              BottomNavigationBarItem(
+                label: "Tasks",
+                icon: Icon(Icons.menu),
+              ),
+              BottomNavigationBarItem(
+                label: "Done",
+                icon: Icon(Icons.check),
+              ),
+            ],
+          ),
+          body: cubit.screens[cubit.currentIndex],
+        );
         },
-        child: Icon(isBottomSheetShown ? Icons.check : Icons.add),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (index) {
-            currentIndex = index;
-        },
-        items: [
-          BottomNavigationBarItem(
-            label: "Archive",
-            icon: Icon(Icons.archive),
-          ),
-          BottomNavigationBarItem(
-            label: "Tasks",
-            icon: Icon(Icons.menu),
-          ),
-          BottomNavigationBarItem(
-            label: "Done",
-            icon: Icon(Icons.check),
-          ),
-        ],
-      ),
-      body: screens[currentIndex],
     );
   }
 
